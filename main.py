@@ -67,6 +67,21 @@ def get_microservice_dirs(repo: git.Repo) -> list:
 
     return microservices
 
+def remove_java_comments(content):
+    """
+    Removes Java single and multi-line comments from content.
+
+    :param content: Java source code as a string
+    :return: Source code with comments removed
+    """
+    # Remove multi-line comments /* ... */
+    content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+
+    # Remove single-line comments // ...
+    content = re.sub(r'//.*?$', '', content, flags=re.MULTILINE)
+
+    return content
+
 def crawl_microservice(repo, microservice_path, search_patterns=None) -> dict:
     """
     Crawl a single microservice directory for controllers (excluding tests)
@@ -83,7 +98,7 @@ def crawl_microservice(repo, microservice_path, search_patterns=None) -> dict:
             'annotations': ['@RestController', '@Controller']
         }
     # Common build/cache dirs
-    skipped_dirs = ['target', 'build', 'node_modules', '.idea', '.gradle', 'test', 'tests', 'testing']
+    skipped_dirs = ['test', 'spec', 'config', '.git', '__pycache__', 'node_modules']
     file_extensions = ['.java', '.groovy', '.kt', '.scala']
 
     repo_root = repo.working_dir
@@ -107,11 +122,11 @@ def crawl_microservice(repo, microservice_path, search_patterns=None) -> dict:
             is_controller = False
 
             # Check file name pattern (w/o extension)
-            # file_base = os.path.splitext(file)[0]
-            # for suffix in search_patterns['file_suffixes']:
-            #     if file_base.endswith(suffix):
-            #         is_controller = True
-            #         break
+            file_base = os.path.splitext(file)[0]
+            for suffix in search_patterns['file_suffixes']:
+                if file_base.endswith(suffix):
+                    is_controller = True
+                    break
 
             # Check directory name pattern
             # if not is_controller:
@@ -125,9 +140,11 @@ def crawl_microservice(repo, microservice_path, search_patterns=None) -> dict:
             if not is_controller:
                 try:
                     with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read(5000)
+                        content = f.read()
+                        content_no_comments = remove_java_comments(content)
                         for annotation in search_patterns['annotations']:
-                            if annotation in content:
+                            pattern = rf'{re.escape(annotation)}(?:\s|\(|$)'
+                            if re.search(pattern, content_no_comments):
                                 is_controller = True
                                 break
                 except Exception as e:
