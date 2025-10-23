@@ -262,17 +262,6 @@ This tool was developed to analyze REST API endpoints in microservice architectu
 ### Issue: Parsing errors in specific files
 **Solution**: The tool automatically falls back to regex parsing when javalang fails. Check console output for fallback messages.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Areas for Improvement
-- Add support for additional Spring annotations
-- Improve regex patterns for non-Java languages
-- Add support for Spring WebFlux reactive endpoints
-- Add parallel processing for faster analysis
-- Add support for custom annotation patterns
-
 ## Author
 
 C. Stoner - University of Arizona - CloudHubs
